@@ -35,12 +35,12 @@ function expAndScaleEachArtb (adoc) {
   try {
     app.userInteractionLevel = UserInteractionLevel.DONTDISPLAYALERTS;
 
-    var showConfirm        = false,
+    var showConfirm        = false, // switch to show/hide confirmation of the script finished
         storeInteractLavel = app.userInteractionLevel,
         fileName           = adoc.name.slice (0, adoc.name.lastIndexOf ('.')),
-        folderPath         = '/d/Кнопки/1', // можно менять: произвольная папка сохранения jpeg  и eps
-        //        folderPath         = adoc.path + '/eps_jpg_' + fileName, // папка рядом с ai-файлом
-        tmplWidth          = 50, // можно менять: размер до которого нужно уменьшить артборды и содержимое
+        folderPath         = '/d/РєРЅРѕРїРєРё/1', // custom folder
+        //        folderPath         = adoc.path + '/eps_jpg_' + fileName, // folder near ai-file
+        tmplWidth          = 50, // template width for eps scaling to
         fullPath           = folderPath + '/' + fileName,
         artbLen            = adoc.artboards.length,
         totalDate          = new Date ();
@@ -155,7 +155,7 @@ function expAndScaleEachArtb (adoc) {
   function _scaleAndFit () {
 
     var scaleFact,
-        //        tmplWidth  = 100, // вынесено наверх
+        //        tmplWidth  = 100, // пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ
         elem,
         elemWidth,
         artbWidth  = Math.abs (adoc.artboards[0].artboardRect[0]) - Math.abs (adoc.artboards[0].artboardRect[2]),
@@ -259,10 +259,10 @@ function expAndScaleEachArtb (adoc) {
       function _getBounds (collection, bounds) {
         var clipGroupElems, i, j;
 
-        if (collection.typename != 'GroupItem') { // любой отдельный элемент неконтейнер
+        if (collection.typename != 'GroupItem') { // пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
           return collection.geometricBounds;
         }
-        if (collection.clipped) { // группа с маской => ищем маску
+        if (collection.clipped) { // пїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅ => пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ
           clipGroupElems = collection.pathItems;
 
           for (i = 0; i < clipGroupElems.length; i++) {
@@ -277,12 +277,12 @@ function expAndScaleEachArtb (adoc) {
           return bounds;
         }
 
-        // группа без обтравочной маски => цикл по элементам группы
+        // пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ => пїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ
         for (j = 0; j < collection.pageItems.length; j++) {
 
           var el = collection.pageItems [j];
 
-          if (el.typename != 'GroupItem') { // любой pageItem кроме группы
+          if (el.typename != 'GroupItem') { // пїЅпїЅпїЅпїЅпїЅ pageItem пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ
             if (bounds == '') {
               bounds = el.geometricBounds;
               continue;
@@ -290,7 +290,7 @@ function expAndScaleEachArtb (adoc) {
             bounds = _compareBounds (el, bounds);
           }
 
-          if (el.typename == 'GroupItem' && el.clipped) { // группа с маской => ищем маску
+          if (el.typename == 'GroupItem' && el.clipped) { // пїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅ => пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ
             clipGroupElems = el.pathItems;
             for (i = 0; i < clipGroupElems.length; i++) {
               if (clipGroupElems[i].clipping) {
@@ -304,7 +304,7 @@ function expAndScaleEachArtb (adoc) {
             continue;
           }
 
-          if (el.typename == 'GroupItem' && !el.groupItems && !el.clipped) { // группа без маски и без групп
+          if (el.typename == 'GroupItem' && !el.groupItems && !el.clipped) { // пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ
             if (bounds == '') {
               bounds = el.geometricBounds;
 //          bounds = getBoundsExtend ( el.pageItems, bounds );
@@ -314,7 +314,7 @@ function expAndScaleEachArtb (adoc) {
             continue;
           }
 
-          if (el.typename == 'GroupItem' && el.groupItems) { // группа без маски, но с группами => рекурсия
+          if (el.typename == 'GroupItem' && el.groupItems) { // пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ, пїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ => пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
             for (var l = 0; l < el.pageItems.length; l++) {
               /* if ( bounds == '' ) {
                bounds = getBoundsExtend ( el.pageItems[l], '' );
@@ -326,7 +326,7 @@ function expAndScaleEachArtb (adoc) {
         }
         return bounds;
 
-        // сравнить и вернуть самые широкие geometricBounds элемента
+        // пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ geometricBounds пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
         function _compareBounds (elem, boundsToCompare) {
           var elemBounds = elem.geometricBounds;
           elemBounds[0] < boundsToCompare[0] ? boundsToCompare[0] = elemBounds[0] : '';
