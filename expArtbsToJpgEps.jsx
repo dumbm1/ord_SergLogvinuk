@@ -155,7 +155,7 @@ function expAndScaleEachArtb (adoc) {
   function _scaleAndFit () {
 
     var scaleFact,
-        //        tmplWidth  = 100, // �������� ������
+        //        tmplWidth  = 100,
         elem,
         elemWidth,
         artbWidth  = Math.abs (adoc.artboards[0].artboardRect[0]) - Math.abs (adoc.artboards[0].artboardRect[2]),
@@ -164,72 +164,82 @@ function expAndScaleEachArtb (adoc) {
         lay        = adoc.layers.add (),
         i;
 
-    (function scaleAndFit () {
+    for (var j = 0; j < activeDocument.artboards.length; j++) {
+      var artb = activeDocument.artboards[j];
+      activeDocument.artboards.setActiveArtboardIndex (j);
+      activeDocument.selectObjectsOnActiveArtboard ();
+      executeMenuCommand ('selectallinartboard');
+      act_scale ('20.0');
+      executeMenuCommand ('Fit Artboard to selected Art');
+      executeMenuCommand ('deselectall');
+    }
 
-      var functions      = [
-        _1_addRect, _2_group, _3_masking, _4_resize, _5_fitArtb, _6_delMask
-      ];
-      var eventDescripts = [
-        'add rect (future mask) to each artboard',
-        'group items on each artboards',
-        'masking each group',
-        'resize each group',
-        'fit each artboard to group bounds',
-        'delete mask'
-      ];
+    /*    (function scaleAndFit () {
 
-      _logProcess (functions, eventDescripts, artbLen, 0);
+     var functions      = [
+     _1_addRect, _2_group, _3_masking, _4_resize, _5_fitArtb, _6_delMask
+     ];
+     var eventDescripts = [
+     'add rect (future mask) to each artboard',
+     'group items on each artboards',
+     'masking each group',
+     'resize each group',
+     'fit each artboard to group bounds',
+     'delete mask'
+     ];
 
-      executeMenuCommand ("deselectall");
+     _logProcess (functions, eventDescripts, artbLen, 0);
 
-      function _1_addRect (i) {
-        adoc.artboards.setActiveArtboardIndex (i);
-        adoc.artboards[i].rulerOrigin = [0, 0];
-        adoc.rulerOrigin              = [0, adoc.height];
-        _addRectToArtb (lay);
-      }
+     executeMenuCommand ("deselectall");
 
-      function _2_group (i) {
-        executeMenuCommand ("deselectall");
-        adoc.artboards.setActiveArtboardIndex (i);
-        adoc.selectObjectsOnActiveArtboard ();
-        executeMenuCommand ('group');
-      }
+     function _1_addRect (i) {
+     adoc.artboards.setActiveArtboardIndex (i);
+     adoc.artboards[i].rulerOrigin = [0, 0];
+     adoc.rulerOrigin              = [0, adoc.height];
+     _addRectToArtb (lay);
+     }
 
-      function _3_masking (i) {
-        adoc.layers[0].groupItems[i].clipped = true;
-      }
+     function _2_group (i) {
+     executeMenuCommand ("deselectall");
+     adoc.artboards.setActiveArtboardIndex (i);
+     adoc.selectObjectsOnActiveArtboard ();
+     executeMenuCommand ('group');
+     }
 
-      function _4_resize (i) {
-        elem = adoc.layers[0].groupItems[i];
-        if (
-          elem.geometricBounds[0] == tmplBounds[0] ||
-          elem.geometricBounds[1] == tmplBounds[1] ||
-          elem.geometricBounds[2] == tmplBounds[2] ||
-          elem.geometricBounds[3] == tmplBounds[3]) {
-          scaleFact = tmplWidth * 100 / tmplBounds[2];
-        } else {
-          elemWidth = _getBoundsExtend (elem)[2];
-          scaleFact = tmplWidth * 100 / elemWidth;
-        }
-        elem.resize (scaleFact, scaleFact,
-          true, true, true, true,
-          undefined,
-          Transformation.CENTER);
-      }
+     function _3_masking (i) {
+     adoc.layers[0].groupItems[i].clipped = true;
+     }
 
-      function _5_fitArtb (i) {
-        adoc.artboards.setActiveArtboardIndex (i);
-        adoc.selectObjectsOnActiveArtboard ();
-        adoc.fitArtboardToSelectedArt (i);
-      }
+     function _4_resize (i) {
+     elem = adoc.layers[0].groupItems[i];
+     if (
+     elem.geometricBounds[0] == tmplBounds[0] ||
+     elem.geometricBounds[1] == tmplBounds[1] ||
+     elem.geometricBounds[2] == tmplBounds[2] ||
+     elem.geometricBounds[3] == tmplBounds[3]) {
+     scaleFact = tmplWidth * 100 / tmplBounds[2];
+     } else {
+     elemWidth = _getBoundsExtend (elem)[2];
+     scaleFact = tmplWidth * 100 / elemWidth;
+     }
+     elem.resize (scaleFact, scaleFact,
+     true, true, true, true,
+     undefined,
+     Transformation.CENTER);
+     }
 
-      function _6_delMask (i) {
-        adoc.layers[0].groupItems[i].clipped = false;
-        adoc.layers[0].groupItems[i].pageItems[0].remove ();
-      }
+     function _5_fitArtb (i) {
+     adoc.artboards.setActiveArtboardIndex (i);
+     adoc.selectObjectsOnActiveArtboard ();
+     adoc.fitArtboardToSelectedArt (i);
+     }
 
-    } ());
+     function _6_delMask (i) {
+     adoc.layers[0].groupItems[i].clipped = false;
+     adoc.layers[0].groupItems[i].pageItems[0].remove ();
+     }
+
+     } ());*/
 
     function _addRectToArtb (container) {
       var artbWidth  = adoc.width,
@@ -533,5 +543,79 @@ function expAndScaleEachArtb (adoc) {
           ('000' + date.getMilliseconds ()).slice (-3);
 
     return formatDate;
+  }
+
+  function act_scale (scalePctEps) {
+    {
+      var actStr = '/version 3' +
+        '/name [ 8' +
+        '	7365745363616c65' +
+        ']' +
+        '/isOpen 1' +
+        '/actionCount 1' +
+        '/action-1 {' +
+        '	/name [ 8' +
+        '		6163745363616c65' +
+        '	]' +
+        '	/keyIndex 0' +
+        '	/colorIndex 0' +
+        '	/isOpen 1' +
+        '	/eventCount 1' +
+        '	/event-1 {' +
+        '		/useRulersIn1stQuadrant 0' +
+        '		/internalName (adobe_scale)' +
+        '		/localizedName [ 5' +
+        '			5363616c65' +
+        '		]' +
+        '		/isOpen 1' +
+        '		/isOn 1' +
+        '		/hasDialog 1' +
+        '		/showDialog 0' +
+        '		/parameterCount 5' +
+        '		/parameter-1 {' +
+        '			/key 1970169453' +
+        '			/showInPalette -1' +
+        '			/type (boolean)' +
+        '			/value 0' +
+        '		}' +
+        '		/parameter-2 {' +
+        '			/key 1818848869' +
+        '			/showInPalette -1' +
+        '			/type (boolean)' +
+        '			/value 1' +
+        '		}' +
+        '		/parameter-3 {' +
+        '			/key 1752136302' +
+        '			/showInPalette -1' +
+        '			/type (unit real)' +
+        '			/value ' + scalePctEps +
+        '			/unit 592474723' +
+        '		}' +
+        '		/parameter-4 {' +
+        '			/key 1987339116' +
+        '			/showInPalette -1' +
+        '			/type (unit real)' +
+        '			/value ' + scalePctEps +
+        '			/unit 592474723' +
+        '		}' +
+        '		/parameter-5 {' +
+        '			/key 1668247673' +
+        '			/showInPalette -1' +
+        '			/type (boolean)' +
+        '			/value 0' +
+        '		}' +
+        '	}' +
+        '}'
+    }
+
+    var f = new File ('~/ScriptAction.aia');
+    f.open ('w');
+    f.write (actStr);
+    f.close ();
+    app.loadAction (f);
+    f.remove ();
+    app.doScript ("actScale", "setScale", false); // action name, set name
+    app.unloadAction ("setScale", ""); // set name
+
   }
 }
