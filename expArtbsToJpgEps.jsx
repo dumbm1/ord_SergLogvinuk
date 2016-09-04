@@ -1,23 +1,36 @@
 /**
- * ai.jsx (c)MaratShagiev m_js@bk.ru 28.08.2016
- *
- * expArtbsToJpgEpx
- * version 2.2
- *
- * compatible CS6+
- *
- * scaleAndExport with logging to estk console
- *
- * 1. save all artboards to PDF
- * 2. open each pdf page in photoshop and save in jpeg
- * 3. scale each artboard with content
- * 4. export each artboard to eps
- *
- */
-//@target illustrator-20
-////@targetengine "sss"
+ * ai.jsx (c)MaratShagiev m_js@bk.ru 04.09.2016
 
-/*(function () {
+ #Adobe ExtendScript epxArtbsToJpgEps.jsx
+ ##version: 2.3
+ ##compatible: Illustrator CS6+
+
+ ##great destination:
+ 1. export all artboards to jpg with 300dpi and max quality
+ 2. resize all artboards
+ 3. export all artboards to eps
+
+ ##pre conditions:
+ 1. The Adobe ExtendScript Toolkit application must be installed
+ 2. All artboards must be the same size, and squard
+ 3. Objects from different artboards should not overlap with other artboards
+
+ ##using:
+ 1. open script file, change settings, save the script
+ 2. open Illustrator file and run the script
+
+ ##peculiarity:
+ If the illustrations are very complex and a large number of artboards,
+ then the script can take a very long time.
+ It may be about 30 minutes, it is depending on the speed of your computer.
+
+ * */
+//@target illustrator
+
+/**
+ // processed all open documents
+ // todo: refactor as reverse loop
+ ( function () {
  if ( documents.length == 1 ) {
  expAndScaleEachArtb ( documents[ 0 ] );
  return;
@@ -25,46 +38,46 @@
  for ( var i = 0; i < documents.length; i++ ) {
  expAndScaleEachArtb ( documents[ i ] );
  i--;
- }
- }
- } ());*/
-expAndScaleEachArtb (activeDocument);
+ } } } ());
+ */
+expArtbsToJpgEps (activeDocument);
 
-function expAndScaleEachArtb (adoc) {
+function expArtbsToJpgEps (adoc) {
 
   try {
     app.userInteractionLevel = UserInteractionLevel.DONTDISPLAYALERTS;
 
-    var showConfirm        = false, // switch to show/hide confirmation of the script finished
-        storeInteractLavel = app.userInteractionLevel,
+    /**
+     * BEGIN THE SETTINGS THAT MAY BE CHANGED BY USER
+     * */
+      // USER CUSTOM FOLDER
+    var folderPath         = '/d/кнопки/1';
+    // WIDTH IN POINTS FOR EPS SCALING TO
+    var epsWidthTo         = 50;
+    /**
+     * END THE SETTINGS THAT MAY BE CHANGED BY USER
+     * */
+
+    var storeInteractLavel = app.userInteractionLevel,
         fileName           = adoc.name.slice (0, adoc.name.lastIndexOf ('.')),
-        folderPath         = '/d/кнопки/1', // custom folder
-        //        folderPath         = adoc.path + '/eps_jpg_' + fileName, // folder near ai-file
-        tmplWidth          = 50, // template width for eps scaling to
         fullPath           = folderPath + '/' + fileName,
         artbLen            = adoc.artboards.length,
         totalDate          = new Date ();
 
-    (  new Folder (folderPath).exists == false ) ? new Folder (folderPath).create () : '';
+    (new Folder (folderPath).exists == false) ? new Folder (folderPath).create () : '';
 
-    _logProcess ([_unlockAndUnhideAll], ['unlock and unhide'], 1, 0);
-    _logProcess ([_saveAsPdf], ['save pdf'], 1, 0, fullPath);
-    _logProcess ([_makeJpgFromPdf], ['pass to photoshop making jpeg from pdf'], 1, 0, fullPath);
-    _scaleAndFit ();
-    _logProcess ([_delEmptyLays], ['delete empty layers'], 1, 0);
-    _logProcess ([_expToEps], ['export to eps'], 1, 0, fullPath);
+    $.writeln ('>>>==============================>>>');
 
-    $.writeln ('all illustrator processes are completed\ntotal script runtime: ' + _format_ms (new Date () - totalDate));
+    runAndLog ([unlockUnhide], ['unlock and unhide'], 1, 0);
+    runAndLog ([saveAsPdf], ['save pdf'], 1, 0, fullPath);
+    runAndLog ([makeJpgFromPdf], ['pass to photoshop making jpeg from pdf'], 1, 0, fullPath);
+    runAndLog ([scaleAndFit], ['scale and fit'], 1, 0);
+    runAndLog ([delEmptyLays], ['delete empty layers'], 1, 0);
+    runAndLog ([expToEps], ['export to eps'], 1, 0, fullPath);
 
-    if (showConfirm) {
-      if (confirm ('all illustrator processes are completed\ntotal script runtime: ' +
-          _format_ms (new Date () - totalDate) + '\nclear console?')) {
-        var bt    = new BridgeTalk ();
-        bt.target = 'estoolkit';
-        bt.body   = 'app.clc();';
-        bt.send ();
-      }
-    }
+    $.writeln ('all illustrator processes are completed\ntotal script runtime: ' +
+      formatMsec (new Date () - totalDate));
+    $.writeln ('<<<==============================<<<');
 
   } catch (e) {
     alert (e.line + '\n' + e.message);
@@ -77,7 +90,7 @@ function expAndScaleEachArtb (adoc) {
    *** THE LIBRARY ***
    ******************* */
 
-  function _saveAsPdf (fullPath) {
+  function saveAsPdf (fullPath) {
     var pdfSaveOpts = new PDFSaveOptions (),
         f           = new File (fullPath);
 
@@ -91,7 +104,7 @@ function expAndScaleEachArtb (adoc) {
     adoc.saveAs (f, pdfSaveOpts);
   }
 
-  function _makeJpgFromPdf (fullPath) {
+  function makeJpgFromPdf (fullPath) {
 //    var btCount = 1;
     sendBt ();
 
@@ -152,230 +165,112 @@ function expAndScaleEachArtb (adoc) {
     }
   }
 
-  function _scaleAndFit () {
+  function scaleAndFit () {
+    var artbWidth = adoc.artboards[0].artboardRect[0] - adoc.artboards[0].artboardRect[2];
+    var scaleFact = Math.abs (epsWidthTo * 100 / artbWidth) + '';
 
-    var scaleFact,
-        //        tmplWidth  = 100,
-        elem,
-        elemWidth,
-        artbWidth  = Math.abs (adoc.artboards[0].artboardRect[0]) - Math.abs (adoc.artboards[0].artboardRect[2]),
-        tmplBounds = [0, 0, artbWidth, -artbWidth],
-        //        scaleFactStroke = scaleFact / 100,
-        lay        = adoc.layers.add (),
-        i;
+    if (!isNum (epsWidthTo) || epsWidthTo < 0 || Math.abs (artbWidth) < epsWidthTo) {
+      throw new Error (
+        'The value of the variable epsWidthTo must be:\n' +
+        ' – number\n' +
+        ' – greater than zero\n' +
+        ' – less than the width of the artboards\n' +
+        'Enter the correct value and try again.'
+      );
+      return;
+    }
+
+    if (!scaleFact.match (/\.\d+$/)) {  // WARN: if no decimal point then add it to string
+      scaleFact += '.0';
+    }
 
     for (var j = 0; j < activeDocument.artboards.length; j++) {
       var artb = activeDocument.artboards[j];
       activeDocument.artboards.setActiveArtboardIndex (j);
-      activeDocument.selectObjectsOnActiveArtboard ();
       executeMenuCommand ('selectallinartboard');
-      act_scale ('20.0');
+      _act_scale (scaleFact);
       executeMenuCommand ('Fit Artboard to selected Art');
       executeMenuCommand ('deselectall');
     }
+    var rws = Math.round (Math.sqrt (adoc.artboards.length));
+    activeDocument.rearrangeArtboards (DocumentArtboardLayout.GridByRow, rws, 20, true);
 
-    /*    (function scaleAndFit () {
+    function _act_scale (scalePctEps) {
+      {
+        var actStr = '/version 3' +
+          '/name [ 8' +
+          '	7365745363616c65' +
+          ']' +
+          '/isOpen 1' +
+          '/actionCount 1' +
+          '/action-1 {' +
+          '	/name [ 8' +
+          '		6163745363616c65' +
+          '	]' +
+          '	/keyIndex 0' +
+          '	/colorIndex 0' +
+          '	/isOpen 1' +
+          '	/eventCount 1' +
+          '	/event-1 {' +
+          '		/useRulersIn1stQuadrant 0' +
+          '		/internalName (adobe_scale)' +
+          '		/localizedName [ 5' +
+          '			5363616c65' +
+          '		]' +
+          '		/isOpen 1' +
+          '		/isOn 1' +
+          '		/hasDialog 1' +
+          '		/showDialog 0' +
+          '		/parameterCount 5' +
+          '		/parameter-1 {' +
+          '			/key 1970169453' +
+          '			/showInPalette -1' +
+          '			/type (boolean)' +
+          '			/value 0' +
+          '		}' +
+          '		/parameter-2 {' +
+          '			/key 1818848869' +
+          '			/showInPalette -1' +
+          '			/type (boolean)' +
+          '			/value 1' +
+          '		}' +
+          '		/parameter-3 {' +
+          '			/key 1752136302' +
+          '			/showInPalette -1' +
+          '			/type (unit real)' +
+          '			/value ' + scalePctEps +
+          '			/unit 592474723' +
+          '		}' +
+          '		/parameter-4 {' +
+          '			/key 1987339116' +
+          '			/showInPalette -1' +
+          '			/type (unit real)' +
+          '			/value ' + scalePctEps +
+          '			/unit 592474723' +
+          '		}' +
+          '		/parameter-5 {' +
+          '			/key 1668247673' +
+          '			/showInPalette -1' +
+          '			/type (boolean)' +
+          '			/value 0' +
+          '		}' +
+          '	}' +
+          '}'
+      }
 
-     var functions      = [
-     _1_addRect, _2_group, _3_masking, _4_resize, _5_fitArtb, _6_delMask
-     ];
-     var eventDescripts = [
-     'add rect (future mask) to each artboard',
-     'group items on each artboards',
-     'masking each group',
-     'resize each group',
-     'fit each artboard to group bounds',
-     'delete mask'
-     ];
+      var f = new File ('~/ScriptAction.aia');
+      f.open ('w');
+      f.write (actStr);
+      f.close ();
+      app.loadAction (f);
+      f.remove ();
+      app.doScript ("actScale", "setScale", false); // action name, set name
+      app.unloadAction ("setScale", ""); // set name
 
-     _logProcess (functions, eventDescripts, artbLen, 0);
-
-     executeMenuCommand ("deselectall");
-
-     function _1_addRect (i) {
-     adoc.artboards.setActiveArtboardIndex (i);
-     adoc.artboards[i].rulerOrigin = [0, 0];
-     adoc.rulerOrigin              = [0, adoc.height];
-     _addRectToArtb (lay);
-     }
-
-     function _2_group (i) {
-     executeMenuCommand ("deselectall");
-     adoc.artboards.setActiveArtboardIndex (i);
-     adoc.selectObjectsOnActiveArtboard ();
-     executeMenuCommand ('group');
-     }
-
-     function _3_masking (i) {
-     adoc.layers[0].groupItems[i].clipped = true;
-     }
-
-     function _4_resize (i) {
-     elem = adoc.layers[0].groupItems[i];
-     if (
-     elem.geometricBounds[0] == tmplBounds[0] ||
-     elem.geometricBounds[1] == tmplBounds[1] ||
-     elem.geometricBounds[2] == tmplBounds[2] ||
-     elem.geometricBounds[3] == tmplBounds[3]) {
-     scaleFact = tmplWidth * 100 / tmplBounds[2];
-     } else {
-     elemWidth = _getBoundsExtend (elem)[2];
-     scaleFact = tmplWidth * 100 / elemWidth;
-     }
-     elem.resize (scaleFact, scaleFact,
-     true, true, true, true,
-     undefined,
-     Transformation.CENTER);
-     }
-
-     function _5_fitArtb (i) {
-     adoc.artboards.setActiveArtboardIndex (i);
-     adoc.selectObjectsOnActiveArtboard ();
-     adoc.fitArtboardToSelectedArt (i);
-     }
-
-     function _6_delMask (i) {
-     adoc.layers[0].groupItems[i].clipped = false;
-     adoc.layers[0].groupItems[i].pageItems[0].remove ();
-     }
-
-     } ());*/
-
-    function _addRectToArtb (container) {
-      var artbWidth  = adoc.width,
-          artbHeight = adoc.height,
-          rect       = container.pathItems.rectangle (0, 0, artbWidth, artbHeight);
-
-      rect.filled  = false;
-      rect.stroked = false;
-
-      return rect;
     }
-
-    /**
-     * get selection.bounds:  [left, top, right, bottom]
-     * additionaly calculate width, height
-     *
-     * @param [Object/Collection]
-     * @return {Array} [ bounds: [left, top, right, bottom], width, height ]
-     */
-    function _getBoundsExtend (selectElems) {
-
-      var bounds = _getBounds (selectElems, []),
-          width  = _calcElemWidthByBounds (bounds),
-          height = _calcElemHeightByBounds (bounds);
-
-// recursive search of maximal bounds
-      function _getBounds (collection, bounds) {
-        var clipGroupElems, i, j;
-
-        if (collection.typename != 'GroupItem') { // ����� ��������� ������� �����������
-          return collection.geometricBounds;
-        }
-        if (collection.clipped) { // ������ � ������ => ���� �����
-          clipGroupElems = collection.pathItems;
-
-          for (i = 0; i < clipGroupElems.length; i++) {
-            if (clipGroupElems[i].clipping) {
-              if (bounds == '') {
-                bounds = clipGroupElems[i].geometricBounds;
-                continue;
-              }
-              bounds = _compareBounds (clipGroupElems[i], bounds);
-            }
-          }
-          return bounds;
-        }
-
-        // ������ ��� ����������� ����� => ���� �� ��������� ������
-        for (j = 0; j < collection.pageItems.length; j++) {
-
-          var el = collection.pageItems [j];
-
-          if (el.typename != 'GroupItem') { // ����� pageItem ����� ������
-            if (bounds == '') {
-              bounds = el.geometricBounds;
-              continue;
-            }
-            bounds = _compareBounds (el, bounds);
-          }
-
-          if (el.typename == 'GroupItem' && el.clipped) { // ������ � ������ => ���� �����
-            clipGroupElems = el.pathItems;
-            for (i = 0; i < clipGroupElems.length; i++) {
-              if (clipGroupElems[i].clipping) {
-                if (bounds == '') {
-                  bounds = clipGroupElems[i].geometricBounds;
-                  continue;
-                }
-                bounds = _compareBounds (clipGroupElems[i], bounds);
-              }
-            }
-            continue;
-          }
-
-          if (el.typename == 'GroupItem' && !el.groupItems && !el.clipped) { // ������ ��� ����� � ��� �����
-            if (bounds == '') {
-              bounds = el.geometricBounds;
-//          bounds = getBoundsExtend ( el.pageItems, bounds );
-              continue;
-            }
-            bounds = _compareBounds (el.geometricBounds, bounds);
-            continue;
-          }
-
-          if (el.typename == 'GroupItem' && el.groupItems) { // ������ ��� �����, �� � �������� => ��������
-            for (var l = 0; l < el.pageItems.length; l++) {
-              /* if ( bounds == '' ) {
-               bounds = getBoundsExtend ( el.pageItems[l], '' );
-               }*/
-              bounds = getBoundsExtend (el.pageItems[l], bounds);
-            }
-            continue;
-          }
-        }
-        return bounds;
-
-        // �������� � ������� ����� ������� geometricBounds ��������
-        function _compareBounds (elem, boundsToCompare) {
-          var elemBounds = elem.geometricBounds;
-          elemBounds[0] < boundsToCompare[0] ? boundsToCompare[0] = elemBounds[0] : '';
-          elemBounds[1] > boundsToCompare[1] ? boundsToCompare[1] = elemBounds[1] : '';
-          elemBounds[2] > boundsToCompare[2] ? boundsToCompare[2] = elemBounds[2] : '';
-          elemBounds[3] < boundsToCompare[3] ? boundsToCompare[3] = elemBounds[3] : '';
-          return boundsToCompare;
-        }
-      }
-
-// calculate item width by it left and right bounds
-      function _calcElemWidthByBounds (bounds) {
-        var elemWidth = 0,
-            left      = bounds[0],
-            right     = bounds[2];
-
-        (left <= 0 && right <= 0) || (left >= 0 && right >= 0) ? elemWidth = Math.abs (left - right) : '';
-        left <= 0 && right >= 0 ? elemWidth = Math.abs (left) + right : '';
-
-        return elemWidth;
-      }
-
-// calculate item height bu it top and bottom bounds
-      function _calcElemHeightByBounds (bounds) {
-        var elemHeight = 0,
-            top        = bounds[1],
-            bottom     = bounds[3];
-
-        (top <= 0 && bottom <= 0) || (top >= 0 && bottom >= 0) ? elemHeight = Math.abs (top - bottom) : '';
-        top >= 0 && bottom <= 0 ? elemHeight = top + Math.abs (bottom) : '';
-        return elemHeight;
-      }
-
-      return [bounds, width, height];
-    }
-
   }
 
-  function _expToEps (fullPath) {
+  function expToEps (fullPath) {
 
     var opts         = new EPSSaveOptions (),
         epsFile      = new File (fullPath),
@@ -388,7 +283,8 @@ function expAndScaleEachArtb (adoc) {
     opts.embedAllFonts              = false;
     opts.embedAllFonts              = false;
     /**
-     * How transparency should be flattened when saving EPS and Illustrator file formats with compatibility set to
+     * How transparency should be flattened when saving EPS and
+     * Illustrator file formats with compatibility set to
      * versions of Illustrator earlier than Illustrator 10
      * */
     opts.flattenOuput = OutputFlattening.PRESERVEAPPEARANCE; //PRESERVEPATHS
@@ -406,7 +302,7 @@ function expAndScaleEachArtb (adoc) {
 
   }
 
-  function _delEmptyLays () {
+  function delEmptyLays () {
 
     for (var i = 0; i < activeDocument.layers.length; i++) {
       var lay = activeDocument.layers[i];
@@ -490,7 +386,7 @@ function expAndScaleEachArtb (adoc) {
     }
   }
 
-  function _unlockAndUnhideAll () {
+  function unlockUnhide () {
     for (var i = 0; i < activeDocument.layers.length; i++) {
       if (activeDocument.layers[i].visible == false) {
         activeDocument.layers[i].visible = true;
@@ -504,7 +400,7 @@ function expAndScaleEachArtb (adoc) {
     executeMenuCommand ("deselectall");
   }
 
-  function _logProcess (funcs, descripts, callCounter, startCoount, arg) {
+  function runAndLog (funcs, descripts, callCounter, startCoount, arg) {
     var i, j,
         percentWeight = 100 / callCounter,
         date          = new Date (), tmpDate;
@@ -527,13 +423,13 @@ function expAndScaleEachArtb (adoc) {
       }
       $.writeln ('100%');
       if (tmpDate) {
-        $.writeln ('intermediate runtime: ' + _format_ms (new Date () - tmpDate));
+        $.writeln ('intermediate runtime: ' + formatMsec (new Date () - tmpDate));
       }
     }
-    $.writeln ('total function runtime: ' + _format_ms (new Date () - date) + '\n');
+    $.writeln ('total function runtime: ' + formatMsec (new Date () - date) + '\n');
   }
 
-  function _format_ms (millisec) {
+  function formatMsec (millisec) {
 
     var date       = new Date (millisec),
         formatDate =
@@ -541,81 +437,10 @@ function expAndScaleEachArtb (adoc) {
           ('00' + date.getMinutes ()).slice (-2) + ':' +
           ('00' + date.getSeconds ()).slice (-2) + ':' +
           ('000' + date.getMilliseconds ()).slice (-3);
-
     return formatDate;
   }
 
-  function act_scale (scalePctEps) {
-    {
-      var actStr = '/version 3' +
-        '/name [ 8' +
-        '	7365745363616c65' +
-        ']' +
-        '/isOpen 1' +
-        '/actionCount 1' +
-        '/action-1 {' +
-        '	/name [ 8' +
-        '		6163745363616c65' +
-        '	]' +
-        '	/keyIndex 0' +
-        '	/colorIndex 0' +
-        '	/isOpen 1' +
-        '	/eventCount 1' +
-        '	/event-1 {' +
-        '		/useRulersIn1stQuadrant 0' +
-        '		/internalName (adobe_scale)' +
-        '		/localizedName [ 5' +
-        '			5363616c65' +
-        '		]' +
-        '		/isOpen 1' +
-        '		/isOn 1' +
-        '		/hasDialog 1' +
-        '		/showDialog 0' +
-        '		/parameterCount 5' +
-        '		/parameter-1 {' +
-        '			/key 1970169453' +
-        '			/showInPalette -1' +
-        '			/type (boolean)' +
-        '			/value 0' +
-        '		}' +
-        '		/parameter-2 {' +
-        '			/key 1818848869' +
-        '			/showInPalette -1' +
-        '			/type (boolean)' +
-        '			/value 1' +
-        '		}' +
-        '		/parameter-3 {' +
-        '			/key 1752136302' +
-        '			/showInPalette -1' +
-        '			/type (unit real)' +
-        '			/value ' + scalePctEps +
-        '			/unit 592474723' +
-        '		}' +
-        '		/parameter-4 {' +
-        '			/key 1987339116' +
-        '			/showInPalette -1' +
-        '			/type (unit real)' +
-        '			/value ' + scalePctEps +
-        '			/unit 592474723' +
-        '		}' +
-        '		/parameter-5 {' +
-        '			/key 1668247673' +
-        '			/showInPalette -1' +
-        '			/type (boolean)' +
-        '			/value 0' +
-        '		}' +
-        '	}' +
-        '}'
-    }
-
-    var f = new File ('~/ScriptAction.aia');
-    f.open ('w');
-    f.write (actStr);
-    f.close ();
-    app.loadAction (f);
-    f.remove ();
-    app.doScript ("actScale", "setScale", false); // action name, set name
-    app.unloadAction ("setScale", ""); // set name
-
+  function isNum (n) {
+    return !isNaN (parseFloat (n)) && isFinite (n);
   }
 }
